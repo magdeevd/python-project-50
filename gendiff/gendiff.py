@@ -3,7 +3,7 @@ import json
 
 
 def _compare_jsons(json1, json2):
-    all_keys = set(json1.keys()).union(set(json2.keys()))
+    all_keys = sorted(set(json1.keys()).union(set(json2.keys())))
 
     diff = []
 
@@ -15,6 +15,12 @@ def _compare_jsons(json1, json2):
                     'key': key,
                     'old_value': json1[key],
                     'new_value': json2[key]
+                })
+            case (True, True) if json1[key] == json2[key]:
+                diff.append({
+                    'type': 'not changed',
+                    'key': key,
+                    'value': json1[key]
                 })
             case (True, False):
                 diff.append({
@@ -32,19 +38,22 @@ def _compare_jsons(json1, json2):
     return diff
 
 
-def _format_diff(diff):
-    lines = ["{"]
-    for diff in diff:
-        if diff['type'] == 'changed':
-            lines.append(f"  - {diff['key']}: {diff['old_value']}")
-            lines.append(f"  + {diff['key']}: {diff['new_value']}")
-        elif diff['type'] == 'removed':
-            lines.append(f"  - {diff['key']}: {diff['value']}")
-        elif diff['type'] == 'added':
-            lines.append(f"  + {diff['key']}: {diff['value']}")
-    lines.append("}")
+def _format_diff(diffs):
+    lines = []
 
-    return "\n".join(lines)
+    for diff in diffs:
+        match diff['type']:
+            case 'changed':
+                lines.append(f"  - {diff['key']}: {diff['old_value']}")
+                lines.append(f"  + {diff['key']}: {diff['new_value']}")
+            case 'removed':
+                lines.append(f"  - {diff['key']}: {diff['value']}")
+            case 'added':
+                lines.append(f"  + {diff['key']}: {diff['value']}")
+            case 'not changed':
+                lines.append(f"    {diff['key']}: {diff['value']}")
+
+    return "\n".join(["{", *lines, "}"])
 
 
 def generate_diff(file_path1: str, file_path2: str) -> str:
