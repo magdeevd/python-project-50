@@ -15,6 +15,11 @@ def main():
         type=str,
         help='The path to the second configuration file.'
     )
+    parser.add_argument(
+        '-f', '--format',
+        type=str,
+        help='set format of output'
+    )
     args = parser.parse_args()
 
 
