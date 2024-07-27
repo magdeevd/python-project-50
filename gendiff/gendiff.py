@@ -1,38 +1,38 @@
 import argparse
-import json
+from gendiff.parser import parsefile
 
 
-def _compare_jsons(json1, json2):
-    all_keys = sorted(set(json1.keys()).union(set(json2.keys())))
+def _compare_dicts(dict1, dict2):
+    all_keys = sorted(set(dict1.keys()).union(set(dict2.keys())))
 
     diff = []
 
     for key in all_keys:
-        match (key in json1, key in json2):
-            case (True, True) if json1[key] != json2[key]:
+        match (key in dict1, key in dict2):
+            case (True, True) if dict1[key] != dict2[key]:
                 diff.append({
                     'type': 'changed',
                     'key': key,
-                    'old_value': json1[key],
-                    'new_value': json2[key]
+                    'old_value': dict1[key],
+                    'new_value': dict2[key]
                 })
-            case (True, True) if json1[key] == json2[key]:
+            case (True, True) if dict1[key] == dict2[key]:
                 diff.append({
                     'type': 'not changed',
                     'key': key,
-                    'value': json1[key]
+                    'value': dict1[key]
                 })
             case (True, False):
                 diff.append({
                     'type': 'removed',
                     'key': key,
-                    'value': json1[key]
+                    'value': dict1[key]
                 })
             case (False, True):
                 diff.append({
                     'type': 'added',
                     'key': key,
-                    'value': json2[key]
+                    'value': dict2[key]
                 })
 
     return diff
@@ -57,11 +57,10 @@ def _format_diff(diffs):
 
 
 def generate_diff(file_path1: str, file_path2: str) -> str:
-    with open(file_path1, 'r') as f1, open(file_path2, 'r') as f2:
-        data1 = json.load(f1)
-        data2 = json.load(f2)
+    data1 = parsefile(file_path1)
+    data2 = parsefile(file_path2)
 
-    diff = _compare_jsons(data1, data2)
+    diff = _compare_dicts(data1, data2)
     formated_diff = _format_diff(diff)
 
     return formated_diff
